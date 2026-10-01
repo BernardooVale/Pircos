@@ -1,0 +1,82 @@
+# ==========================================
+# Pircos — Storage Local & Dados Sensíveis
+# ==========================================
+# PDFs de notas de corretagem (nunca comitar documentos financeiros)
+storage/
+api/storage/
+*.pdf
+
+# Variáveis de ambiente e segredos
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Banco de dados local / Docker volumes montados
+postgres-data/
+*.sqlite
+*.db
+
+# ==========================================
+# Backend: Go
+# ==========================================
+# Binários compilados
+api/bin/
+api/cmd/server/server
+api/cmd/server/main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+profile.pprof
+
+# Dependency directories (caso use vendor)
+vendor/
+
+# ==========================================
+# Frontend: Next.js & Node
+# ==========================================
+# Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js build output
+web/.next/
+web/out/
+.next/
+out/
+
+# TypeScript cache
+*.tsbuildinfo
+next-env.d.ts
+
+# ==========================================
+# IDEs & Sistema Operacional
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# VS Code & JetBrains
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

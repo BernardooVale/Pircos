@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pircos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-pircos}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pircos_secret}
+      POSTGRES_DB: ${DB_NAME:-pircos_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pircos} -d ${DB_NAME:-pircos_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: pircos-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://${DB_USER:-pircos}:${DB_PASSWORD:-pircos_secret}@postgres:5432/${DB_NAME:-pircos_db}?sslmode=disable
+      STORAGE_DIR: /app/storage/documents
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api/storage/documents:/app/storage/documents
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: pircos-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:

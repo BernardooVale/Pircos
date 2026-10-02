@@ -13,6 +13,8 @@ import (
 	"github.com/pircos/api/internal/config"
 	"github.com/pircos/api/internal/handler"
 	"github.com/pircos/api/internal/repository"
+	"github.com/pircos/api/internal/service"
+	"github.com/pircos/api/internal/storage"
 )
 
 func main() {
@@ -33,13 +35,51 @@ func main() {
 		log.Fatalf("[MAIN] Failed to run migrations: %v", err)
 	}
 
-	// Ensure storage directory exists
-	if err := os.MkdirAll(cfg.StorageDir, 0o755); err != nil {
-		log.Fatalf("[MAIN] Failed to create storage directory: %v", err)
+	// Storage
+	fileStore, err := storage.NewLocalStorage(cfg.StorageDir)
+	if err != nil {
+		log.Fatalf("[MAIN] Failed to initialize storage: %v", err)
 	}
 
+	// Repositories
+	docRepo := repository.NewDocumentRepo(pool)
+	assetRepo := repository.NewAssetRepo(pool)
+	txRepo := repository.NewTransactionRepo(pool)
+	earningRepo := repository.NewEarningRepo(pool)
+	userRepo := repository.NewUserRepo(pool)
+	balanceRepo := repository.NewMonthlyTaxBalanceRepo(pool)
+	quoteRepo := repository.NewMarketQuoteRepo(pool)
+	benchmarkRepo := repository.NewMacroBenchmarkRepo(pool)
+
+	// Services
+	sinacorParser := service.NewSinacorParser()
+	taxEngine := service.NewTaxEngine()
+	cascadeEngine := service.NewCascadeEngine(taxEngine, balanceRepo, txRepo, assetRepo, earningRepo)
+	marketData := service.NewMarketDataService(quoteRepo, benchmarkRepo)
+	portfolioService := service.NewPortfolioService(txRepo, assetRepo, earningRepo, marketData, benchmarkRepo)
+
+	// Handlers
+	docHandler := handler.NewDocumentHandler(
+		sinacorParser, fileStore, docRepo, assetRepo, txRepo, userRepo, cascadeEngine,
+	)
+	assetHandler := handler.NewAssetHandler(assetRepo)
+	txHandler := handler.NewTransactionHandler(txRepo, assetRepo, userRepo, cascadeEngine)
+	earningHandler := handler.NewEarningHandler(earningRepo, assetRepo, userRepo, cascadeEngine)
+	portfolioHandler := handler.NewPortfolioHandler(portfolioService, userRepo)
+	taxHandler := handler.NewTaxHandler(balanceRepo, txRepo, assetRepo, userRepo)
+	benchmarkHandler := handler.NewBenchmarkHandler(marketData)
+
 	// Setup HTTP server
-	router := handler.Router(pool)
+	router := handler.Router(handler.Dependencies{
+		Pool:               pool,
+		DocumentHandler:    docHandler,
+		AssetHandler:       assetHandler,
+		TransactionHandler: txHandler,
+		EarningHandler:     earningHandler,
+		PortfolioHandler:   portfolioHandler,
+		TaxHandler:         taxHandler,
+		BenchmarkHandler:   benchmarkHandler,
+	})
 	server := &http.Server{
 		Addr:         cfg.Addr(),
 		Handler:      router,

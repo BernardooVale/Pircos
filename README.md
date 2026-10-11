@@ -78,7 +78,7 @@ Conforme as normas da Receita Federal do Brasil, operações de compra e venda d
 ### 4. Baldes Tributários Isolados e Compensação Cruzada
 Implementado em `api/internal/service/tax_engine.go` e `cascade_engine.go`:
 - **FIIs**: Balde 100% segregado, alíquota de 20%, sem isenção de volume. Prejuízo de FII **só** compensa ganho de FII.
-- **Ações Swing Trade**: Alíquota de 15%. Isenção de imposto sobre ganho de capital caso o somatório das vendas de ações no mês seja $\le \text{R\$} 20.000,00$. Prejuízos gerados em meses isentos continuam acumulando para compensação em meses tributáveis futuros.
+- **Ações Swing Trade**: Alíquota de 15%. Isenção de imposto sobre ganho de capital caso o somatório das vendas de ações no mês seja $\le$ R\$ 20.000,00. Prejuízos gerados em meses isentos continuam acumulando para compensação em meses tributáveis futuros.
 - **ETFs / Ações Swing**: Compensação cruzada permitida pela legislação entre Swing Trade de ações e ETFs (alíquota de 15%).
 - **Day Trade**: Alíquota de 20%, compensável com prejuízos de Day Trade.
 - **Carregamento Perpétuo de Prejuízos**: Saldos negativos são carregados mês a mês indefinidamente até total absorção.
